@@ -1,1 +1,1 @@
-# Passoword-Manager-CCIT-Project-2
+# Password-Manager-CCIT-Project-2
