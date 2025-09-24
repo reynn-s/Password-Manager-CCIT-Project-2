@@ -68,19 +68,19 @@ def create_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
         print("DB connection failed.")
-        time.sleep(2); return
+        time.sleep(1); return
 
     try:
         id_user = get_user_id(conn, username)
         if not id_user:
-            print("User not found."); time.sleep(2); return
+            print("User not found."); time.sleep(1); return
 
         header("CREATE VAULT", username)
         vault_name = input_nonempty("Vault name: ")
         desc = input("Description (optional): ").strip()
         mpw = getpass.getpass("Set vault password: ")
         if not mpw:
-            print("Vault password cannot be empty."); time.sleep(2); return
+            print("Vault password cannot be empty."); time.sleep(1); return
 
         hashed = hash_pw(mpw)
         cur = conn.cursor()
@@ -98,7 +98,7 @@ def create_vault(username: str):
                 print(f"DB error: {e}")
         finally:
             cur.close()
-        time.sleep(2)
+        time.sleep(1)
     finally:
         conn.close()
 
@@ -106,24 +106,24 @@ def open_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
         print("DB connection failed.")
-        time.sleep(2); return
+        time.sleep(1); return
 
     try:
         id_user = get_user_id(conn, username)
         if not id_user:
-            print("User not found."); time.sleep(2); return
+            print("User not found."); time.sleep(1); return
 
         # list vaults
         header("OPEN VAULT", username)
         vaults = list_user_vaults(conn, id_user)
         if not vaults:
-            print("You have no vaults yet."); time.sleep(2); return
+            print("You have no vaults yet."); time.sleep(1); return
 
         for i, v in enumerate(vaults, 1):
             print(f"{i}. {v['vault_name']}  —  {v.get('description') or ''}")
         idx = choose_index(len(vaults))
         if idx is None:
-            print("Invalid selection."); time.sleep(2); return
+            print("Invalid selection."); time.sleep(1); return
 
         chosen = vaults[idx - 1]
         # password prompt
@@ -131,7 +131,7 @@ def open_vault(username: str):
         row = get_user_vault(conn, id_user, chosen["id_vault"])
         if not row or not check_pw(mpw, row["vault_password"]):
             print("❌ Wrong vault password.")
-            time.sleep(2); return
+            time.sleep(1); return
 
         # success -> entries submenu
         entries_menu(conn, username, id_user, row["id_vault"], row["vault_name"])
@@ -142,24 +142,30 @@ def edit_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
         print("DB connection failed.")
-        time.sleep(2); return
+        time.sleep(1); return
 
     try:
         id_user = get_user_id(conn, username)
         if not id_user:
-            print("User not found."); time.sleep(2); return
+            print("User not found."); time.sleep(1); return
 
         header("EDIT VAULT", username)
         vaults = list_user_vaults(conn, id_user)
         if not vaults:
-            print("You have no vaults yet."); time.sleep(2); return
+            print("You have no vaults yet."); time.sleep(1); return
 
         for i, v in enumerate(vaults, 1):
             print(f"{i}. {v['vault_name']}  —  {v.get('description') or ''}")
         idx = choose_index(len(vaults))
         if idx is None:
-            print("Invalid selection."); time.sleep(2); return
+            print("Invalid selection."); time.sleep(1); return
         chosen = vaults[idx - 1]
+
+        mpw = getpass.getpass(f"Enter vault password for '{chosen['vault_name']}': ")
+        row = get_user_vault(conn, id_user, chosen["id_vault"])
+        if not row or not check_pw(mpw, row["vault_password"]):
+            print("❌ Wrong vault password.")
+            time.sleep(1); return
 
         # Ask what to change
         print("\nLeave a field empty to keep current value.")
@@ -170,7 +176,7 @@ def edit_vault(username: str):
         if change_pw:
             mpw = getpass.getpass("New vault password: ")
             if not mpw:
-                print("Password cannot be empty."); time.sleep(2); return
+                print("Password cannot be empty."); time.sleep(1); return
             new_hash = hash_pw(mpw)
 
         # Build dynamic UPDATE safely
@@ -188,7 +194,7 @@ def edit_vault(username: str):
 
         if not sets:
             print("Nothing to update.")
-            time.sleep(2); return
+            time.sleep(1); return
 
         q = f"UPDATE vaults SET {', '.join(sets)} WHERE id_user=%s AND id_vault=%s"
         params.extend([id_user, chosen["id_vault"]])
@@ -208,7 +214,7 @@ def edit_vault(username: str):
                 print(f"DB error: {e}")
         finally:
             cur.close()
-        time.sleep(2)
+        time.sleep(1)
     finally:
         conn.close()
 
@@ -216,23 +222,23 @@ def delete_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
         print("DB connection failed.")
-        time.sleep(2); return
+        time.sleep(1); return
 
     try:
         id_user = get_user_id(conn, username)
         if not id_user:
-            print("User not found."); time.sleep(2); return
+            print("User not found."); time.sleep(1); return
 
         header("DELETE VAULT", username)
         vaults = list_user_vaults(conn, id_user)
         if not vaults:
-            print("You have no vaults yet."); time.sleep(2); return
+            print("You have no vaults yet."); time.sleep(1); return
 
         for i, v in enumerate(vaults, 1):
             print(f"{i}. {v['vault_name']}  —  {v.get('description') or ''}")
         idx = choose_index(len(vaults))
         if idx is None:
-            print("Invalid selection."); time.sleep(2); return
+            print("Invalid selection."); time.sleep(1); return
         chosen = vaults[idx - 1]
 
         # verify password
@@ -240,12 +246,12 @@ def delete_vault(username: str):
         row = get_user_vault(conn, id_user, chosen["id_vault"])
         if not row or not check_pw(mpw, row["vault_password"]):
             print("❌ Wrong vault password.")
-            time.sleep(2); return
+            time.sleep(1); return
 
         really = input("Are you sure you want to delete this vault? (type 'DELETE' to confirm): ").strip()
         if really != "DELETE":
             print("Cancelled.")
-            time.sleep(2); return
+            time.sleep(1); return
 
         cur = conn.cursor()
         try:
@@ -256,7 +262,7 @@ def delete_vault(username: str):
             print(f"DB error: {e}")
         finally:
             cur.close()
-        time.sleep(2)
+        time.sleep(1)
     finally:
         conn.close()
 

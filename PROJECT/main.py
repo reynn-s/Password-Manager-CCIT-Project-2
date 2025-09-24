@@ -33,23 +33,23 @@ def registration():
     hashed_password = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
 
     if not username or not master_password:
-        print("\n Username and password cannot be empty."); time.sleep(2); return
+        print("\n Username and password cannot be empty."); time.sleep(1); return
     connection = get_connection()
     if not hasattr(connection, 'cursor'):
-        print(f"Failed to connect to the database. {connection}"); time.sleep(2); return
+        print(f"Failed to connect to the database. {connection}"); time.sleep(1); return
     cursor = None
     try:
         cursor = connection.cursor()
         query_check = "SELECT username FROM users WHERE username = %s"
         cursor.execute(query_check, (username,))
         if cursor.fetchone():
-            print("\n Username already exists. Please choose a different username."); time.sleep(2); return
+            print("\n Username already exists. Please choose a different username."); time.sleep(1); return
         query_insert = "INSERT INTO users (username, master_password) VALUES (%s, %s)"
         cursor.execute(query_insert, (username, hashed_password))
         connection.commit()
-        print("\n Registration successful! You can log in now."); time.sleep(2)
+        print("\n Registration successful! You can log in now."); time.sleep(1)
     except mysql.connector.Error as err:
-        print(f"\n Database error: {err}"); time.sleep(2)
+        print(f"\n Database error: {err}"); time.sleep(1)
     finally:
         if cursor: cursor.close()
         if connection.is_connected():
@@ -71,7 +71,7 @@ def vault_menu(username):
         elif choice == '5':
             break
         else:
-            print("Invalid choice, please try again."); time.sleep(2)
+            print("Invalid choice, please try again."); time.sleep(1)
 
 # fungsi login pake username:master_password
 def login():
@@ -88,13 +88,13 @@ def login():
         cursor.execute(query_check, (username,))
         result = cursor.fetchone()
         if result and bcrypt.checkpw(master_password.encode('utf-8'), result['master_password'].encode('utf-8')):
-            print(f"\n Login successfully! Welcome, {result['username']}."); time.sleep(3)
+            print(f"\n Login successfully! Welcome, {result['username']}."); time.sleep(1)
             return result['username']
         else:
-            print("\n Login failed. Username or Master Password is incorrect."); time.sleep(3)
+            print("\n Login failed. Username or Master Password is incorrect."); time.sleep(1)
             return None
     except mysql.connector.Error as err:
-        print(f"\n Database error: {err}"); time.sleep(3)
+        print(f"\n Database error: {err}"); time.sleep(1)
         return None
     finally:
         if cursor: cursor.close()
@@ -121,7 +121,7 @@ def main_menu():
         elif choice == '4':
             print("Logout."); break
         else:
-            print("Invalid choice, please try again. (1/2/3/4)"); time.sleep(2)
+            print("Invalid choice, please try again. (1/2/3/4)"); time.sleep(1)
 
 if __name__ == "__main__":
     main_menu()
