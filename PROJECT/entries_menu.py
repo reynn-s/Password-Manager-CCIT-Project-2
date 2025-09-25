@@ -4,7 +4,7 @@ import mysql.connector
 import bcrypt
 from utils import get_connection, header
 
-# ----------------- SMALL HELPERS -----------------
+# ----------------- SMALL HELPERS FUNCTION -----------------
 def get_user_id(conn, username: str) -> int | None:
     cur = conn.cursor(dictionary=True)
     try:
@@ -39,7 +39,7 @@ def choose_index(max_n: int, prompt="Select number: ") -> int | None:
         return i
     return None
 
-# List current user's vaults; returns list of dicts
+# List current user's vaults, returns list of dicts
 def list_user_vaults(conn, id_user: int):
     cur = conn.cursor(dictionary=True)
     try:
@@ -90,10 +90,10 @@ def create_vault(username: str):
                 (id_user, vault_name, hashed, desc or None),
             )
             conn.commit()
-            print("✅ Vault created.")
+            print("(^▽^)👍 Vault created.")
         except mysql.connector.Error as e:
             if e.errno == 1062:
-                print("❌ You already have a vault with that name.")
+                print("(╥﹏╥) You already have a vault with that name.")
             else:
                 print(f"DB error: {e}")
         finally:
@@ -102,6 +102,7 @@ def create_vault(username: str):
     finally:
         conn.close()
 
+# Opening a vault and verifying the vault password
 def open_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
@@ -130,7 +131,7 @@ def open_vault(username: str):
         mpw = getpass.getpass(f"Enter vault password for '{chosen['vault_name']}': ")
         row = get_user_vault(conn, id_user, chosen["id_vault"])
         if not row or not check_pw(mpw, row["vault_password"]):
-            print("❌ Wrong vault password.")
+            print("(╥﹏╥) Wrong vault password.")
             time.sleep(1); return
 
         # success -> entries submenu
@@ -138,6 +139,7 @@ def open_vault(username: str):
     finally:
         conn.close()
 
+# Editing an existing vault (name, description, password)
 def edit_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
@@ -164,7 +166,7 @@ def edit_vault(username: str):
         mpw = getpass.getpass(f"Enter vault password for '{chosen['vault_name']}': ")
         row = get_user_vault(conn, id_user, chosen["id_vault"])
         if not row or not check_pw(mpw, row["vault_password"]):
-            print("❌ Wrong vault password.")
+            print("(╥﹏╥) Wrong vault password.")
             time.sleep(1); return
 
         # Ask what to change
@@ -203,13 +205,13 @@ def edit_vault(username: str):
         try:
             cur.execute(q, tuple(params))
             conn.commit()
-            print("✅ Vault updated.")
+            print("(^▽^)👍 Vault updated.")
         except mysql.connector.Error as e:
             # 1451: cannot update parent due to FK (if ON UPDATE CASCADE missing)
             if e.errno in (1451,):
-                print("❌ Rename failed due to FK. Add ON UPDATE CASCADE to fk_entries_vault_composite (see note).")
+                print("(╥﹏╥) Rename failed due to FK. Add ON UPDATE CASCADE to fk_entries_vault_composite (see note).")
             elif e.errno == 1062:
-                print("❌ You already have a vault with that name.")
+                print("(╥﹏╥) You already have a vault with that name.")
             else:
                 print(f"DB error: {e}")
         finally:
@@ -218,6 +220,7 @@ def edit_vault(username: str):
     finally:
         conn.close()
 
+# Deleting a vault and all its entries (CASCADE)
 def delete_vault(username: str):
     conn = get_connection()
     if isinstance(conn, mysql.connector.Error):
@@ -245,7 +248,7 @@ def delete_vault(username: str):
         mpw = getpass.getpass(f"Enter vault password for '{chosen['vault_name']}' to confirm: ")
         row = get_user_vault(conn, id_user, chosen["id_vault"])
         if not row or not check_pw(mpw, row["vault_password"]):
-            print("❌ Wrong vault password.")
+            print("(╥﹏╥) Wrong vault password.")
             time.sleep(1); return
 
         really = input("Are you sure you want to delete this vault? (type 'DELETE' to confirm): ").strip()
@@ -285,6 +288,7 @@ def entries_menu(conn, username: str, id_user: int, id_vault: int, vault_name: s
         else:
             print("Invalid choice."); time.sleep(1.5)
 
+# Listing entries in the current vault
 def list_entries(conn, id_user: int, id_vault: int, vault_name: str, pause=False):
     cur = conn.cursor(dictionary=True)
     try:
@@ -301,13 +305,14 @@ def list_entries(conn, id_user: int, id_vault: int, vault_name: str, pause=False
         else:
             for i, r in enumerate(rows, 1):
                 print(f"{i}. {r['website_url']} | {r['site_username']} | {r['site_password']} | {r.get('description') or ''}")
-                print("Website | Username | Password | Description")
+                print("\nWebsite | Username | Password | Description")
         if pause:
             input("\nEnter to continue...")
         return rows
     finally:
         cur.close()
 
+# Adding a new entry to the current vault
 def add_entry(conn, id_user: int, id_vault: int, vault_name: str):
     print()
     website = input_nonempty("Website/URL: ")
@@ -325,16 +330,17 @@ def add_entry(conn, id_user: int, id_vault: int, vault_name: str):
         """, (id_vault, vault_name, website, site_user, site_pass or None, desc or None,
               id_user, id_vault, vault_name))
         if cur.rowcount == 0:
-            print("❌ Not authorized for this vault.")
+            print("(╥﹏╥) Not authorized for this vault.")
         else:
             conn.commit()
-            print("✅ Entry added.")
+            print("(^▽^)👍 Entry added.")
     except mysql.connector.Error as e:
         print(f"DB error: {e}")
     finally:
         cur.close()
     time.sleep(1.5)
 
+# Editing an existing entry in the current vault
 def edit_entry(conn, id_user: int, id_vault: int, vault_name: str):
     rows = list_entries(conn, id_user, id_vault, vault_name, pause=False)
     if not rows:
@@ -362,16 +368,17 @@ def edit_entry(conn, id_user: int, id_vault: int, vault_name: str):
             WHERE e.id_entry=%s AND v.id_user=%s AND v.id_vault=%s AND v.vault_name=%s
         """, (website, site_user, site_pass, desc, target['id_entry'], id_user, id_vault, vault_name))
         if cur.rowcount == 0:
-            print("❌ Not authorized or entry not found.")
+            print("(╥﹏╥) Not authorized or entry not found.")
         else:
             conn.commit()
-            print("✅ Entry updated.")
+            print("(^▽^)👍 Entry updated.")
     except mysql.connector.Error as e:
         print(f"DB error: {e}")
     finally:
         cur.close()
     time.sleep(1.5)
 
+# Deleting an entry from the current vault
 def delete_entry(conn, id_user: int, id_vault: int, vault_name: str):
     rows = list_entries(conn, id_user, id_vault, vault_name, pause=False)
     if not rows:
@@ -393,7 +400,7 @@ def delete_entry(conn, id_user: int, id_vault: int, vault_name: str):
             WHERE e.id_entry=%s AND v.id_user=%s AND v.id_vault=%s AND v.vault_name=%s
         """, (target['id_entry'], id_user, id_vault, vault_name))
         if cur.rowcount == 0:
-            print("❌ Not authorized or entry not found.")
+            print("(╥﹏╥) Not authorized or entry not found.")
         else:
             conn.commit()
             print("🗑️ Entry deleted.")

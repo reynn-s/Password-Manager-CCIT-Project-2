@@ -7,7 +7,7 @@ from utils import get_connection,header, DB_CONFIG
 from entries_menu import create_vault, open_vault, edit_vault, delete_vault
 
 
-#buat ngecek koneksi ke database
+# Function to check the database connection
 def check_connection_db():
     header("DATABASE CONNECTION CHECK", None)
     print(f"Checking database connection...'{DB_CONFIG['database']}'")
@@ -20,11 +20,11 @@ def check_connection_db():
         print(f"Error details: {connection}")
     input("Press Enter to return to the main menu...")
 
-#clean look biar rapi
+# Function to clear the screen every menu
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
-#fungsi registrasi user baru input username:master_password
+# Function to register a new user username:master_password
 def registration():
     header("USER REGISTRATION", None)
     username = input("Enter a username: ")
@@ -55,6 +55,7 @@ def registration():
         if connection.is_connected():
             connection.close()
 
+# Function for vault menu after login
 def vault_menu(username):
     while True:
         header("VAULT MENU", username)
@@ -73,7 +74,7 @@ def vault_menu(username):
         else:
             print("Invalid choice, please try again."); time.sleep(1)
 
-# fungsi login pake username:master_password
+# Function for user login
 def login():
     header("USER LOGIN", None)
     username = input("Enter your username: ").strip()
@@ -100,7 +101,7 @@ def login():
         if cursor: cursor.close()
         connection.close()
 
-#Main menu untuk menu awal
+# Main menu function
 def main_menu():
     while True:
         header("MAIN MENU", None)
